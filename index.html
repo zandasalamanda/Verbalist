@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verbalist | Eliminate Filler & Brainrot Words</title>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-microphone-slash"></i></div>
+        <div>
+          <h1>Verbalist</h1>
+          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">AI Speech Coach</p>
+        </div>
+        <span>v1.0</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" id="openSettingsBtn" title="Settings">
+          <i class="fa-solid fa-sliders"></i> Settings
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="dashboard-grid">
+      
+      <!-- Left: Speech Console -->
+      <section class="speech-console">
+        
+        <!-- Realtime Alert Banner -->
+        <div class="alert-banner" id="alertBanner">
+          <div class="alert-icon-wrapper" id="alertIconWrapper">
+            <i class="fa-solid fa-circle-check" id="alertIcon"></i>
+          </div>
+          <div class="alert-content">
+            <p class="alert-title" id="alertTitle">Speech Clarity</p>
+            <p class="alert-message" id="alertMessage">Speech is clear. Say a filler or brainrot word to see suggestions.</p>
+          </div>
+        </div>
+
+        <!-- Transcription Screen -->
+        <div class="transcription-panel" id="transcriptionPanel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="pulse-dot"></span> Live Speech stream
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);" id="languageBadge">
+              English (United States)
+            </div>
+          </div>
+          
+          <!-- Text Area -->
+          <div class="transcription-viewport" id="transcriptionViewport"></div>
+
+          <!-- Speech controls and audio wave visualizer -->
+          <div class="speech-controls-container">
+            <div class="visualizer-wrapper">
+              <canvas id="visualizer"></canvas>
+            </div>
+            
+            <div class="control-buttons">
+              <button class="btn btn-primary" id="startBtn">
+                <i class="fa-solid fa-play"></i> Start Session
+              </button>
+              <button class="btn btn-danger" id="stopBtn" style="display: none;">
+                <i class="fa-solid fa-square"></i> End Session
+              </button>
+              <button class="btn btn-secondary btn-icon" id="resetBtn" title="Reset Session">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right: Metrics Sidebar -->
+      <aside class="sidebar-panel">
+        
+        <!-- Practice Challenge Widget -->
+        <div class="widget-card">
+          <div class="widget-header">
+            <h2 class="widget-title"><i class="fa-solid fa-trophy" style="color: var(--accent);"></i> Practice Coach</h2>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;" id="challengeStatus">OFF</span>
+          </div>
+
+          <!-- Challenge presets -->
+          <div class="challenge-grid">
+            <div class="challenge-card active" data-mode="free">
+              <span class="challenge-name">Free Speech</span>
+              <span class="challenge-desc">Untimed practice</span>
+              <span class="challenge-time">∞</span>
+            </div>
+            <div class="challenge-card" data-mode="pitch">
+              <span class="challenge-name">Elevator Pitch</span>
+              <span class="challenge-desc">Quick summaries</span>
+              <span class="challenge-time">1:00 min</span>
+            </div>
+            <div class="challenge-card" data-mode="interview">
+              <span class="challenge-name">Interview Prep</span>
+              <span class="challenge-desc">Behavioral questions</span>
+              <span class="challenge-time">2:00 min</span>
+            </div>
+            <div class="challenge-card" data-mode="presentation">
+              <span class="challenge-name">Product Demo</span>
+              <span class="challenge-desc">Elaborate topics</span>
+              <span class="challenge-time">3:00 min</span>
+            </div>
+          </div>
+
+          <!-- HUD Progress & Timer -->
+          <div class="hud-container">
+            <div class="hud-timer">
+              <div class="timer-circle-wrapper">
+                <svg class="timer-svg">
+                  <circle class="timer-track" cx="22" cy="22" r="20"></circle>
+                  <circle class="timer-progress" id="timerProgress" cx="22" cy="22" r="20"></circle>
+                </svg>
+              </div>
+              <div class="timer-digital" id="timerDigital">00:00</div>
+            </div>
+
+            <div class="hud-score">
+              <p class="score-label">Speech Integrity</p>
+              <div class="score-value-wrapper">
+                <span class="score-number" id="clarityScore">100</span>
+                <span class="score-unit">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Mini Metrics -->
+        <div class="metrics-row">
+          <div class="metric-mini-card">
+            <span class="metric-mini-label">Total Words</span>
+            <span class="metric-mini-val" id="totalWordsCount">0</span>
+          </div>
+          <div class="metric-mini-card">
+            <span class="metric-mini-label">Speed (WPM)</span>
+            <span class="metric-mini-val" id="speechSpeedWpm">0</span>
+          </div>
+          <div class="metric-mini-card">
+            <span class="metric-mini-label">Flagged Words</span>
+            <span class="metric-mini-val" id="flaggedWordsCount" style="color: var(--color-brainrot);">0</span>
+          </div>
+        </div>
+
+        <!-- Filter Category Warning Summary -->
+        <div class="widget-card">
+          <div class="widget-header" style="margin-bottom: 0.75rem;">
+            <h2 class="widget-title"><i class="fa-solid fa-list-check" style="color: var(--accent);"></i> Filters</h2>
+          </div>
+          
+          <div class="category-summary">
+            <div class="category-row">
+              <div class="category-info">
+                <div class="category-indicator cat-fillers"></div>
+                <span class="category-label">Generic Fillers</span>
+              </div>
+              <span class="category-count" id="count-fillers">0</span>
+            </div>
+            
+            <div class="category-row">
+              <div class="category-info">
+                <div class="category-indicator cat-brainrot"></div>
+                <span class="category-label">Brainrot Slang</span>
+              </div>
+              <span class="category-count" id="count-brainrot">0</span>
+            </div>
+            
+            <div class="category-row">
+              <div class="category-info">
+                <div class="category-indicator cat-corporate"></div>
+                <span class="category-label">Corporate Jargon</span>
+              </div>
+              <span class="category-count" id="count-corporate">0</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </main>
+
+    <!-- Bottom: Analytics & Details -->
+    <section class="analytics-section">
+      
+      <!-- Frequencies Table -->
+      <div class="analytics-column">
+        <div class="column-header">
+          <h3 class="column-title"><i class="fa-solid fa-chart-bar" style="color: var(--color-filler);"></i> Top Offending Words</h3>
+        </div>
+        <div class="frequency-list" id="frequencyList"></div>
+      </div>
+
+      <!-- History Log Timeline -->
+      <div class="analytics-column">
+        <div class="column-header">
+          <h3 class="column-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--color-corporate);"></i> Timeline & Suggestions</h3>
+          <button class="btn btn-secondary" id="exportLogBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" title="Export transcript report">
+            <i class="fa-solid fa-download"></i> Export Log
+          </button>
+        </div>
+        <div class="history-log" id="historyLog"></div>
+      </div>
+
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>Verbalist AI Speech Coach &copy; 2026. Made to polish communication and eliminate brainrot.</p>
+    </footer>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 class="modal-title"><i class="fa-solid fa-sliders"></i> Application Settings</h2>
+        <button class="close-btn" id="closeSettingsBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Speech Language -->
+        <div>
+          <h3 class="settings-section-title">Language & Engine</h3>
+          <div class="settings-group">
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Speech Recognition Language</span>
+                <span class="setting-desc">Select primary language for transcript accuracy.</span>
+              </div>
+              <div>
+                <select class="form-input" id="languageSelect">
+                  <option value="en-US" selected>English (United States)</option>
+                  <option value="en-GB">English (United Kingdom)</option>
+                  <option value="es-ES">Spanish (Spain)</option>
+                  <option value="es-MX">Spanish (Mexico)</option>
+                  <option value="fr-FR">French (France)</option>
+                  <option value="de-DE">German (Germany)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter toggles -->
+        <div>
+          <h3 class="settings-section-title">Word Category Toggles</h3>
+          <div class="settings-group">
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Generic Fillers</span>
+                <span class="setting-desc">Detect "like", "literally", "basically", etc.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleFillers" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Gen-Z & Brainrot Slang</span>
+                <span class="setting-desc">Detect "skibidi", "rizz", "gyatt", "yap", etc.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleBrainrot" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Corporate Clichés</span>
+                <span class="setting-desc">Detect "synergy", "circle back", "pivot", etc.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleCorporate" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio Warnings -->
+        <div>
+          <h3 class="settings-section-title">Warning Feedback</h3>
+          <div class="settings-group">
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Audio Alert Beep</span>
+                <span class="setting-desc">Play a gentle tone on word detection.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleAudioAlert" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Alert Volume</span>
+                <span class="setting-desc">Control warning tone sound volume.</span>
+              </div>
+              <div>
+                <input type="range" class="range-slider" id="alertVolume" min="0" max="1" step="0.1" value="0.4">
+              </div>
+            </div>
+
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Visual Warnings</span>
+                <span class="setting-desc">Flash/shake UI on word detection.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleVisualAlert" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Word Lists -->
+        <div>
+          <h3 class="settings-section-title">Custom Forbidden Words</h3>
+          <div class="settings-group">
+            <div style="margin-bottom: 0.5rem;">
+              <span class="setting-label">Add Custom Target</span>
+              <span class="setting-desc" style="display: block; margin-top: 0.1rem;">Define your own word and a professional replacement.</span>
+            </div>
+            <div class="custom-words-input-group">
+              <input type="text" class="form-input" id="customWordInput" placeholder="e.g., actually">
+              <input type="text" class="form-input" id="customReplacementInput" placeholder="e.g., indeed (or empty to omit)">
+              <button class="btn btn-primary" id="addCustomWordBtn" style="padding: 0.5rem 1rem; border-radius: 8px;">
+                <i class="fa-solid fa-plus"></i> Add
+              </button>
+            </div>
+            <div class="custom-words-list" id="customWordsList"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Javascript Scripts -->
+  <script src="dictionary.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
