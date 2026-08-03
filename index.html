@@ -3,274 +3,309 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
   <title>Verbalist | Professional Speaking Coach</title>
-  <meta name="description" content="Verbalist is an AI-powered professional speaking coach that helps you eliminate filler words, improve sentence structure, and speak with clarity and confidence.">
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="style.css">
-  <!-- FontAwesome Icons -->
+  <meta name="description" content="Verbalist is a real-time speaking coach that flags filler words, jargon, and weak phrasing while you talk, so you can hear how you actually sound.">
+
+  <!-- Brand mark, inlined so there is nothing to 404 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' rx='4.5' fill='%23edf1f5'/%3E%3Cg fill='%2307080a'%3E%3Crect x='3.2' y='7.6' width='2.2' height='4.8' rx='1.1'/%3E%3Crect x='6.9' y='4.8' width='2.2' height='10.4' rx='1.1'/%3E%3Crect x='10.6' y='2.6' width='2.2' height='14.8' rx='1.1'/%3E%3Crect x='14.3' y='6' width='2.2' height='8' rx='1.1'/%3E%3C/g%3E%3C/svg%3E">
+
+  <!-- Type: Archivo for the instrument, Newsreader for the words you speak -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..500;1,6..72,400&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="toast-container"></div>
+  <a class="skip-link" href="#transcriptionViewport">Skip to transcript</a>
 
-  <div class="app-container">
-    <!-- Header -->
-    <header>
+  <div id="toastContainer" class="toast-container" role="region" aria-label="Notifications"></div>
+
+  <div class="app">
+
+    <!-- ===================== Top bar ===================== -->
+    <header class="topbar">
       <div class="brand">
-        <div class="brand-icon">
-          <img src="assets/Verblogo.png" alt="Verbalist Logo" class="brand-logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fa-solid fa-waveform-lines\'></i>';">
-        </div>
-        <div>
-          <h1>Verbalist</h1>
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Professional Speaking Coach</p>
-        </div>
-        <span>v2.0</span>
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <rect x="1"  y="7"  width="2.6" height="6"  rx="1.3"/>
+            <rect x="5.4" y="3.5" width="2.6" height="13" rx="1.3"/>
+            <rect x="9.8" y="0.5" width="2.6" height="19" rx="1.3"/>
+            <rect x="14.2" y="5"  width="2.6" height="10" rx="1.3"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">Verbalist</span>
+          <span class="brand-sub">Speaking coach</span>
+        </span>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-secondary" id="openSettingsBtn" title="Settings">
-          <i class="fa-solid fa-sliders"></i> Settings
+      <span class="version-tag">v2.0</span>
+
+      <div class="topbar-actions">
+        <button type="button" class="btn btn-secondary btn-settings" id="openSettingsBtn" aria-haspopup="dialog">
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          <span class="settings-label">Settings</span>
+          <span class="sr-only">Open settings</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Workspace Grid -->
-    <main class="dashboard-grid">
-      
-      <!-- Left: Speech Console -->
-      <section class="speech-console">
-        
-        <!-- Realtime Alert Banner -->
-        <div class="alert-banner" id="alertBanner">
-          <div class="alert-icon-wrapper" id="alertIconWrapper">
-            <i class="fa-solid fa-circle-check" id="alertIcon"></i>
-          </div>
-          <div class="alert-content">
-            <p class="alert-title" id="alertTitle">Speech Clarity</p>
-            <p class="alert-message" id="alertMessage">Your speech is clear and professional. Keep it up!</p>
+    <!-- ===================== Console ===================== -->
+    <main class="console" id="main">
+
+      <!-- ---------- Left: live transcript ---------- -->
+      <section class="console-main" id="transcriptionPanel" aria-labelledby="consoleTitle">
+
+        <div class="console-head">
+          <h2 class="console-title" id="consoleTitle">Live transcript</h2>
+          <span class="tally"><span class="tally-dot" aria-hidden="true"></span>REC</span>
+
+          <div class="console-meta">
+            <div class="confidence-meter" id="confidenceMeter">
+              <span class="confidence-label" id="accuracyLabel">Accuracy</span>
+              <div class="confidence-bar-outer" role="progressbar" aria-labelledby="accuracyLabel" aria-valuemin="0" aria-valuemax="100">
+                <div class="confidence-bar-inner" id="confidenceBar"></div>
+              </div>
+              <span class="confidence-value" id="confidenceValue">&mdash;</span>
+            </div>
+            <span class="lang-badge" id="languageBadge">English (United States)</span>
           </div>
         </div>
 
-        <!-- Transcription Screen -->
-        <div class="transcription-panel" id="transcriptionPanel">
-          <div class="panel-header">
-            <div class="panel-title">
-              <span class="pulse-dot"></span> Live Transcription
-            </div>
-            <div class="panel-header-right">
-              <div class="confidence-meter" id="confidenceMeter">
-                <span class="confidence-label">Accuracy</span>
-                <div class="confidence-bar-outer">
-                  <div class="confidence-bar-inner" id="confidenceBar"></div>
-                </div>
-                <span class="confidence-value" id="confidenceValue">—</span>
-              </div>
-              <div style="font-size: 0.85rem; color: var(--text-muted);" id="languageBadge">
-                English (United States)
-              </div>
-            </div>
+        <!-- Coaching feedback, docked to the transcript it refers to -->
+        <div class="coach" id="alertBanner" role="status" aria-live="polite">
+          <div class="coach-icon" id="alertIconWrapper" aria-hidden="true">
+            <i class="fa-solid fa-circle-check" id="alertIcon"></i>
           </div>
-          
-          <!-- Text Area -->
-          <div class="transcription-viewport" id="transcriptionViewport"></div>
+          <div class="coach-body">
+            <p class="eyebrow coach-title" id="alertTitle">Coach</p>
+            <p class="coach-message" id="alertMessage">Start a session and flagged words appear here with a stronger alternative.</p>
+          </div>
+        </div>
 
-          <!-- Speech controls and audio wave visualizer -->
-          <div class="speech-controls-container">
-            <div class="visualizer-wrapper">
-              <canvas id="visualizer"></canvas>
-            </div>
-            
-            <div class="control-buttons">
-              <button class="btn btn-primary" id="startBtn">
-                <i class="fa-solid fa-play"></i> Start Session
-              </button>
-              <button class="btn btn-danger" id="stopBtn" style="display: none;">
-                <i class="fa-solid fa-square"></i> End Session
-              </button>
-              <button class="btn btn-secondary btn-icon" id="resetBtn" title="Reset Session">
-                <i class="fa-solid fa-rotate-left"></i>
-              </button>
-            </div>
+        <div class="transcript-stage">
+          <div
+            class="transcript"
+            id="transcriptionViewport"
+            role="log"
+            aria-live="polite"
+            aria-atomic="false"
+            aria-relevant="additions text"
+            aria-label="Live transcript"
+            tabindex="0"></div>
+
+          <div class="transcript-empty" aria-hidden="true">
+            <span class="empty-icon"><i class="fa-solid fa-microphone-lines"></i></span>
+            <p class="empty-title state-idle">Ready when you are</p>
+            <p class="empty-title state-live listening-dots">Listening</p>
+            <p class="empty-hint state-idle">Start a session and your words appear here as you speak, with filler words, jargon and weak phrasing marked in place.</p>
+            <p class="empty-hint state-live">Speak naturally. Nothing has come through yet.</p>
+          </div>
+        </div>
+
+        <div class="console-foot">
+          <div class="visualizer-wrapper">
+            <canvas id="visualizer" aria-hidden="true"></canvas>
+          </div>
+          <div class="control-buttons">
+            <button type="button" class="btn btn-primary" id="startBtn">
+              <i class="fa-solid fa-microphone" aria-hidden="true"></i> Start session
+            </button>
+            <button type="button" class="btn btn-danger" id="stopBtn" style="display: none;">
+              <i class="fa-solid fa-stop" aria-hidden="true"></i> End session
+            </button>
+            <button type="button" class="btn btn-secondary btn-icon" id="resetBtn" aria-label="Reset session">
+              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
 
       </section>
 
-      <!-- Right: Metrics Sidebar -->
-      <aside class="sidebar-panel">
-        
-        <!-- Practice Challenge Widget -->
-        <div class="widget-card">
-          <div class="widget-header">
-            <h2 class="widget-title"><i class="fa-solid fa-trophy" style="color: var(--accent);"></i> Practice Coach</h2>
-            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;" id="challengeStatus">OFF</span>
+      <!-- ---------- Right: readouts ---------- -->
+      <aside class="rail" aria-label="Session readouts">
+
+        <section class="rail-block rail-score" aria-labelledby="scoreLabel">
+          <div class="rail-head">
+            <h2 class="eyebrow" id="scoreLabel">Speech integrity</h2>
           </div>
 
-          <!-- Challenge presets -->
-          <div class="challenge-grid">
-            <div class="challenge-card active" data-mode="free">
-              <span class="challenge-name">Free Speech</span>
-              <span class="challenge-desc">Untimed practice</span>
-              <span class="challenge-time">∞</span>
-            </div>
-            <div class="challenge-card" data-mode="pitch">
-              <span class="challenge-name">Elevator Pitch</span>
-              <span class="challenge-desc">Quick summaries</span>
-              <span class="challenge-time">1:00 min</span>
-            </div>
-            <div class="challenge-card" data-mode="interview">
-              <span class="challenge-name">Interview Prep</span>
-              <span class="challenge-desc">Behavioral questions</span>
-              <span class="challenge-time">2:00 min</span>
-            </div>
-            <div class="challenge-card" data-mode="presentation">
-              <span class="challenge-name">Presentation</span>
-              <span class="challenge-desc">Extended topics</span>
-              <span class="challenge-time">3:00 min</span>
-            </div>
+          <div class="score-value-wrapper">
+            <span class="score-number" id="clarityScore">100</span>
+            <span class="score-unit">%</span>
           </div>
 
-          <!-- HUD Progress & Timer -->
-          <div class="hud-container">
-            <div class="hud-timer">
-              <div class="timer-circle-wrapper">
-                <svg class="timer-svg">
-                  <circle class="timer-track" cx="22" cy="22" r="20"></circle>
-                  <circle class="timer-progress" id="timerProgress" cx="22" cy="22" r="20"></circle>
-                </svg>
-              </div>
-              <div class="timer-digital" id="timerDigital">00:00</div>
+          <div class="session-readout">
+            <div class="timer-circle-wrapper">
+              <svg class="timer-svg" viewBox="0 0 44 44" aria-hidden="true">
+                <circle class="timer-track" cx="22" cy="22" r="20"></circle>
+                <circle class="timer-progress" id="timerProgress" cx="22" cy="22" r="20"></circle>
+              </svg>
             </div>
+            <span class="timer-digital" id="timerDigital">00:00</span>
+            <span class="session-state" id="challengeStatus">Off</span>
+          </div>
+        </section>
 
-            <div class="hud-score">
-              <p class="score-label">Speech Integrity</p>
-              <div class="score-value-wrapper">
-                <span class="score-number" id="clarityScore">100</span>
-                <span class="score-unit">%</span>
-              </div>
+        <section class="rail-block" aria-labelledby="statsLabel">
+          <div class="rail-head">
+            <h2 class="eyebrow" id="statsLabel">This session</h2>
+          </div>
+          <div class="stat-grid">
+            <div class="stat">
+              <span class="stat-label">Words</span>
+              <span class="stat-value" id="totalWordsCount">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">WPM</span>
+              <span class="stat-value" id="speechSpeedWpm">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Flagged</span>
+              <span class="stat-value" id="flaggedWordsCount">0</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Quick Mini Metrics -->
-        <div class="metrics-row">
-          <div class="metric-mini-card">
-            <span class="metric-mini-label">Total Words</span>
-            <span class="metric-mini-val" id="totalWordsCount">0</span>
+        <section class="rail-block" aria-labelledby="categoriesLabel">
+          <div class="rail-head">
+            <h2 class="eyebrow" id="categoriesLabel">Categories</h2>
           </div>
-          <div class="metric-mini-card">
-            <span class="metric-mini-label">Speed (WPM)</span>
-            <span class="metric-mini-val" id="speechSpeedWpm">0</span>
-          </div>
-          <div class="metric-mini-card">
-            <span class="metric-mini-label">Flagged</span>
-            <span class="metric-mini-val" id="flaggedWordsCount" style="color: var(--color-informal);">0</span>
-          </div>
-        </div>
-
-        <!-- Filter Category Summary -->
-        <div class="widget-card">
-          <div class="widget-header" style="margin-bottom: 0.75rem;">
-            <h2 class="widget-title"><i class="fa-solid fa-list-check" style="color: var(--accent);"></i> Filters</h2>
-          </div>
-          
-          <div class="category-summary">
-            <div class="category-row">
-              <div class="category-info">
-                <div class="category-indicator cat-fillers"></div>
-                <span class="category-label">Filler Words</span>
-              </div>
+          <div class="category-list">
+            <div class="category-row cat-fillers">
+              <span class="category-indicator" aria-hidden="true"></span>
+              <span class="category-label">Filler words</span>
               <span class="category-count" id="count-fillers">0</span>
             </div>
-            
-            <div class="category-row">
-              <div class="category-info">
-                <div class="category-indicator cat-informal"></div>
-                <span class="category-label">Informal Language</span>
-              </div>
+            <div class="category-row cat-informal">
+              <span class="category-indicator" aria-hidden="true"></span>
+              <span class="category-label">Informal language</span>
               <span class="category-count" id="count-informal">0</span>
             </div>
-            
-            <div class="category-row">
-              <div class="category-info">
-                <div class="category-indicator cat-jargon"></div>
-                <span class="category-label">Overused Jargon</span>
-              </div>
+            <div class="category-row cat-jargon">
+              <span class="category-indicator" aria-hidden="true"></span>
+              <span class="category-label">Overused jargon</span>
               <span class="category-count" id="count-jargon">0</span>
             </div>
-
-            <div class="category-row">
-              <div class="category-info">
-                <div class="category-indicator cat-weak"></div>
-                <span class="category-label">Weak Phrasing</span>
-              </div>
+            <div class="category-row cat-weak">
+              <span class="category-indicator" aria-hidden="true"></span>
+              <span class="category-label">Weak phrasing</span>
               <span class="category-count" id="count-weak">0</span>
             </div>
           </div>
-        </div>
+        </section>
+
+        <section class="rail-block rail-mode" aria-labelledby="modeLabel">
+          <div class="rail-head">
+            <h2 class="eyebrow" id="modeLabel">Session mode</h2>
+          </div>
+          <div class="mode-grid" role="group" aria-labelledby="modeLabel">
+            <button type="button" class="challenge-card active" data-mode="free" aria-pressed="true">
+              <span class="challenge-name">Free speech</span>
+              <span class="challenge-time">Untimed</span>
+            </button>
+            <button type="button" class="challenge-card" data-mode="pitch" aria-pressed="false">
+              <span class="challenge-name">Elevator pitch</span>
+              <span class="challenge-time">1:00</span>
+            </button>
+            <button type="button" class="challenge-card" data-mode="interview" aria-pressed="false">
+              <span class="challenge-name">Interview prep</span>
+              <span class="challenge-time">2:00</span>
+            </button>
+            <button type="button" class="challenge-card" data-mode="presentation" aria-pressed="false">
+              <span class="challenge-name">Presentation</span>
+              <span class="challenge-time">3:00</span>
+            </button>
+          </div>
+        </section>
 
       </aside>
-
     </main>
 
-    <!-- Bottom: Analytics & Details -->
-    <section class="analytics-section">
-      
-      <!-- Frequencies Table -->
+    <!-- ===================== Analytics ===================== -->
+    <section class="analytics" aria-label="Session analysis">
+
       <div class="analytics-column">
         <div class="column-header">
-          <h3 class="column-title"><i class="fa-solid fa-chart-bar" style="color: var(--color-filler);"></i> Top Flagged Words</h3>
+          <h2 class="column-title">Top flagged words</h2>
         </div>
-        <div class="frequency-list" id="frequencyList"></div>
+        <div class="column-body">
+          <div class="list-wrap">
+            <div class="frequency-list js-list" id="frequencyList"></div>
+            <div class="empty-state">
+              <span class="empty-icon"><i class="fa-solid fa-chart-simple"></i></span>
+              <p class="empty-title">Nothing flagged yet</p>
+              <p class="empty-hint">The words you lean on most will rank here.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- History Log Timeline -->
       <div class="analytics-column">
         <div class="column-header">
-          <h3 class="column-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--color-jargon);"></i> Timeline & Suggestions</h3>
-          <button class="btn btn-secondary" id="exportLogBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" title="Export transcript report">
-            <i class="fa-solid fa-download"></i> Export
+          <h2 class="column-title">Timeline</h2>
+          <button type="button" class="btn btn-secondary btn-sm" id="exportLogBtn">
+            <i class="fa-solid fa-arrow-down-to-line" aria-hidden="true"></i> Export
           </button>
         </div>
-        <div class="history-log" id="historyLog"></div>
+        <div class="column-body">
+          <div class="list-wrap">
+            <div class="history-log js-list" id="historyLog"></div>
+            <div class="empty-state">
+              <span class="empty-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+              <p class="empty-title">No entries yet</p>
+              <p class="empty-hint">Every flag lands here, timestamped, with a suggested replacement.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Sentence Analysis Panel -->
       <div class="analytics-column analytics-full-width">
         <div class="column-header">
-          <h3 class="column-title"><i class="fa-solid fa-magnifying-glass-chart" style="color: var(--color-weak);"></i> Sentence Analysis</h3>
+          <h2 class="column-title">Sentence analysis</h2>
         </div>
-        <div class="sentence-analysis-panel" id="sentenceAnalysis"></div>
+        <div class="column-body">
+          <div class="list-wrap">
+            <div class="sentence-analysis-panel js-list" id="sentenceAnalysis"></div>
+            <div class="empty-state">
+              <span class="empty-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+              <p class="empty-title">No notes yet</p>
+              <p class="empty-hint">Run-on sentences, filler density and repeated words are called out here as you speak.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
     </section>
 
-    <!-- Footer -->
-    <footer>
-      <p>Verbalist Professional Speaking Coach &copy; 2026. Speak with clarity, confidence, and precision.</p>
+    <footer class="site-footer">
+      <p>Verbalist &middot; Speech is transcribed by your browser&rsquo;s Web Speech API. Works in Chrome, Edge and Safari.</p>
     </footer>
   </div>
 
-  <!-- Settings Modal -->
-  <div class="modal-overlay" id="settingsModal">
+  <!-- ===================== Settings ===================== -->
+  <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
     <div class="modal-container">
       <div class="modal-header">
-        <h2 class="modal-title"><i class="fa-solid fa-sliders"></i> Application Settings</h2>
-        <button class="close-btn" id="closeSettingsBtn">&times;</button>
+        <h2 class="modal-title" id="settingsTitle">Settings</h2>
+        <button type="button" class="btn btn-ghost btn-sm btn-icon" id="closeSettingsBtn" aria-label="Close settings">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
       </div>
+
       <div class="modal-body">
-        
-        <!-- Speech Language -->
-        <div>
-          <h3 class="settings-section-title">Language & Engine</h3>
+
+        <section>
+          <h3 class="settings-section-title eyebrow">Language</h3>
           <div class="settings-group">
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Speech Recognition Language</span>
-                <span class="setting-desc">Select primary language for transcript accuracy.</span>
+                <label class="setting-label" for="languageSelect">Recognition language</label>
+                <span class="setting-desc">Match this to the language you are speaking.</span>
               </div>
-              <div>
+              <div class="setting-control">
                 <select class="form-input" id="languageSelect">
                   <option value="en-US" selected>English (United States)</option>
                   <option value="en-GB">English (United Kingdom)</option>
@@ -282,40 +317,39 @@
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Filter toggles -->
-        <div>
-          <h3 class="settings-section-title">Detection Categories</h3>
+        <section>
+          <h3 class="settings-section-title eyebrow">What gets flagged</h3>
           <div class="settings-group">
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Filler Words</span>
-                <span class="setting-desc">Detect "um", "like", "you know", "basically", etc.</span>
+                <label class="setting-label" for="toggleFillers">Filler words</label>
+                <span class="setting-desc">&ldquo;um&rdquo;, &ldquo;like&rdquo;, &ldquo;you know&rdquo;, &ldquo;basically&rdquo;.</span>
               </div>
-              <label class="switch">
+              <label class="switch setting-control">
                 <input type="checkbox" id="toggleFillers" checked>
                 <span class="slider"></span>
               </label>
             </div>
-            
+
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Informal Language</span>
-                <span class="setting-desc">Detect casual slang: "gonna", "wanna", "awesome", etc.</span>
+                <label class="setting-label" for="toggleInformal">Informal language</label>
+                <span class="setting-desc">&ldquo;gonna&rdquo;, &ldquo;wanna&rdquo;, &ldquo;awesome&rdquo;, &ldquo;stuff&rdquo;.</span>
               </div>
-              <label class="switch">
+              <label class="switch setting-control">
                 <input type="checkbox" id="toggleInformal" checked>
                 <span class="slider"></span>
               </label>
             </div>
-            
+
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Overused Jargon</span>
-                <span class="setting-desc">Detect "synergy", "circle back", "pivot", etc.</span>
+                <label class="setting-label" for="toggleJargon">Overused jargon</label>
+                <span class="setting-desc">&ldquo;synergy&rdquo;, &ldquo;circle back&rdquo;, &ldquo;bandwidth&rdquo;.</span>
               </div>
-              <label class="switch">
+              <label class="switch setting-control">
                 <input type="checkbox" id="toggleJargon" checked>
                 <span class="slider"></span>
               </label>
@@ -323,79 +357,76 @@
 
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Weak Phrasing</span>
-                <span class="setting-desc">Detect hedging: "I think maybe", "sorry but", etc.</span>
+                <label class="setting-label" for="toggleWeak">Weak phrasing</label>
+                <span class="setting-desc">Hedges like &ldquo;I think maybe&rdquo; or &ldquo;sorry but&rdquo;.</span>
               </div>
-              <label class="switch">
+              <label class="switch setting-control">
                 <input type="checkbox" id="toggleWeak" checked>
                 <span class="slider"></span>
               </label>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Audio Warnings -->
-        <div>
-          <h3 class="settings-section-title">Feedback Preferences</h3>
+        <section>
+          <h3 class="settings-section-title eyebrow">Feedback</h3>
           <div class="settings-group">
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Audio Alert</span>
-                <span class="setting-desc">Play a tone when flagged language is detected.</span>
+                <label class="setting-label" for="toggleAudioAlert">Alert tone</label>
+                <span class="setting-desc">Play a short tone when something is flagged.</span>
               </div>
-              <label class="switch">
+              <label class="switch setting-control">
                 <input type="checkbox" id="toggleAudioAlert" checked>
                 <span class="slider"></span>
               </label>
             </div>
-            
+
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Alert Volume</span>
-                <span class="setting-desc">Control alert tone volume.</span>
+                <label class="setting-label" for="alertVolume">Tone volume</label>
+                <span class="setting-desc">How loud that tone is.</span>
               </div>
-              <div>
+              <div class="setting-control">
                 <input type="range" class="range-slider" id="alertVolume" min="0" max="1" step="0.1" value="0.4">
               </div>
             </div>
 
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Visual Feedback</span>
-                <span class="setting-desc">Flash and shake UI on detection.</span>
+                <label class="setting-label" for="toggleVisualAlert">Highlight the console</label>
+                <span class="setting-desc">Flash the transcript panel on each detection.</span>
               </div>
-              <label class="switch">
+              <label class="switch setting-control">
                 <input type="checkbox" id="toggleVisualAlert" checked>
                 <span class="slider"></span>
               </label>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Custom Word Lists -->
-        <div>
-          <h3 class="settings-section-title">Custom Flagged Words</h3>
+        <section>
+          <h3 class="settings-section-title eyebrow">Your own words</h3>
           <div class="settings-group">
-            <div style="margin-bottom: 0.5rem;">
-              <span class="setting-label">Add Custom Target</span>
-              <span class="setting-desc" style="display: block; margin-top: 0.1rem;">Define your own word and a professional replacement.</span>
+            <div class="setting-row-flex" style="flex-direction: column; align-items: stretch; gap: var(--s-3);">
+              <div class="setting-info">
+                <label class="setting-label" for="customWordInput">Add a word to flag</label>
+                <span class="setting-desc">Give Verbalist a word you want to drop, and what to say instead.</span>
+              </div>
+              <div class="custom-words-input-group">
+                <input type="text" class="form-input" id="customWordInput" placeholder="Word to flag" aria-label="Word to flag">
+                <input type="text" class="form-input" id="customReplacementInput" placeholder="Say this instead" aria-label="Replacement">
+                <button type="button" class="btn btn-primary" id="addCustomWordBtn">Add</button>
+              </div>
+              <div class="custom-words-list" id="customWordsList"></div>
             </div>
-            <div class="custom-words-input-group">
-              <input type="text" class="form-input" id="customWordInput" placeholder="e.g., actually">
-              <input type="text" class="form-input" id="customReplacementInput" placeholder="e.g., indeed (or empty to omit)">
-              <button class="btn btn-primary" id="addCustomWordBtn" style="padding: 0.5rem 1rem; border-radius: 8px;">
-                <i class="fa-solid fa-plus"></i> Add
-              </button>
-            </div>
-            <div class="custom-words-list" id="customWordsList"></div>
           </div>
-        </div>
+        </section>
 
       </div>
     </div>
   </div>
 
-  <!-- Javascript Scripts -->
   <script src="dictionary.js"></script>
   <script src="app.js"></script>
 </body>

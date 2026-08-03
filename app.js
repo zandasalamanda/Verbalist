@@ -67,18 +67,22 @@ let recognition = null;
 let finalTranscriptBuffer = '';
 let alertTimeoutId = null;
 
+// Respect the OS "reduce motion" setting for the waveform and detection flash.
+const reduceMotionQuery = window.matchMedia
+  ? window.matchMedia('(prefers-reduced-motion: reduce)')
+  : { matches: false };
+const prefersReducedMotion = () => reduceMotionQuery.matches;
+
 // Initialize Speech Recognition
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   
   if (!SpeechRecognition) {
     const viewport = document.getElementById('transcriptionViewport');
-    viewport.innerHTML = `<div style="color: var(--color-informal); text-align: center; padding: 2rem;">
-      <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
-      <p style="font-weight: 600;">Web Speech API is not supported in this browser.</p>
-      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
-        Please use a modern browser like Google Chrome, Microsoft Edge, or Safari.
-      </p>
+    viewport.innerHTML = `<div class="transcript-notice">
+      <span class="notice-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+      <p class="notice-title">This browser can't transcribe speech</p>
+      <p class="notice-hint">Verbalist needs the Web Speech API. Open it in Chrome, Edge or Safari to start a session.</p>
     </div>`;
     document.getElementById('startBtn').disabled = true;
     return false;
@@ -102,9 +106,9 @@ function initSpeechRecognition() {
     const alertTitle = document.getElementById('alertTitle');
     const alertMessage = document.getElementById('alertMessage');
     document.getElementById('alertBanner').classList.remove('alert-active');
-    alertIcon.className = 'fa-solid fa-volume-high';
-    alertTitle.textContent = 'Listening...';
-    alertMessage.textContent = 'Speak naturally. We are monitoring your speech in real-time.';
+    alertIcon.className = 'fa-solid fa-microphone-lines';
+    alertTitle.textContent = 'Listening';
+    alertMessage.textContent = 'Speak naturally. Verbalist is monitoring in real time.';
     
     // Start Visualizer wave
     targetWaveAmp = 5; // idle hum
@@ -130,12 +134,10 @@ function initSpeechRecognition() {
     console.error("Speech Recognition Error:", event.error);
     if (event.error === 'not-allowed') {
       const viewport = document.getElementById('transcriptionViewport');
-      viewport.innerHTML = `<div style="color: var(--color-informal); text-align: center; padding: 1rem;">
-        <i class="fa-solid fa-microphone-slash" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
-        <p style="font-weight: 600;">Microphone Access Denied</p>
-        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
-          Please check your browser permissions to allow microphone access, then refresh the page.
-        </p>
+      viewport.innerHTML = `<div class="transcript-notice">
+        <span class="notice-icon"><i class="fa-solid fa-microphone-slash"></i></span>
+        <p class="notice-title">Microphone access is blocked</p>
+        <p class="notice-hint">Allow microphone access for this site in your browser settings, then reload the page.</p>
       </div>`;
       endSession();
     }
@@ -348,24 +350,24 @@ function triggerAlert(word, replacement, category) {
   
   let color = 'var(--color-filler)';
   let glow = 'var(--color-filler-glow)';
-  let label = 'Filler Word Detected';
-  
+  let label = 'Filler word';
+
   if (category === 'informal') {
     color = 'var(--color-informal)';
     glow = 'var(--color-informal-glow)';
-    label = 'Informal Language Detected';
+    label = 'Informal language';
   } else if (category === 'jargon') {
     color = 'var(--color-jargon)';
     glow = 'var(--color-jargon-glow)';
-    label = 'Overused Jargon Detected';
+    label = 'Overused jargon';
   } else if (category === 'weak') {
     color = 'var(--color-weak)';
     glow = 'var(--color-weak-glow)';
-    label = 'Weak Phrasing Detected';
+    label = 'Weak phrasing';
   } else if (category === 'custom') {
     color = 'var(--accent)';
     glow = 'var(--accent-glow)';
-    label = 'Custom Flagged Word';
+    label = 'Your word';
   }
   
   // Update CSS custom properties of alert banner
@@ -379,15 +381,13 @@ function triggerAlert(word, replacement, category) {
   const textReplacement = replacement === '[omit]' ? 'omit it' : `try <span class="replacement-word">${replacement}</span>`;
   alertMessage.innerHTML = `Instead of saying <span class="flagged-word">"${word}"</span>, ${textReplacement}.`;
   
-  // Screen Shake & Flash
-  if (settings.visualAlert) {
+  // Flash the console in the category colour
+  if (settings.visualAlert && !prefersReducedMotion()) {
     const consolePanel = document.getElementById('transcriptionPanel');
     consolePanel.classList.add('shake-container');
-    document.body.style.boxShadow = `inset 0 0 50px ${glow}`;
     setTimeout(() => {
       consolePanel.classList.remove('shake-container');
-      document.body.style.boxShadow = 'none';
-    }, 450);
+    }, 600);
   }
   
   // Synth buzzer/bell audio feedback
@@ -400,13 +400,13 @@ function triggerAlert(word, replacement, category) {
   alertTimeoutId = setTimeout(() => {
     banner.classList.remove('alert-active');
     if (recordingState.isRecording) {
-      alertIcon.className = 'fa-solid fa-volume-high';
-      alertTitle.textContent = 'Listening...';
-      alertMessage.textContent = 'Speak naturally. We are monitoring...';
+      alertIcon.className = 'fa-solid fa-microphone-lines';
+      alertTitle.textContent = 'Listening';
+      alertMessage.textContent = 'Nothing flagged right now. Keep going.';
     } else {
       alertIcon.className = 'fa-solid fa-circle-check';
-      alertTitle.textContent = 'Speech Clarity';
-      alertMessage.textContent = 'Your speech is clear and professional. Keep it up!';
+      alertTitle.textContent = 'Coach';
+      alertMessage.textContent = 'Start a session and flagged words appear here with a stronger alternative.';
     }
   }, 4500);
 }
@@ -508,6 +508,9 @@ function updateScore() {
   } else if (recordingState.score < 90) {
     scoreEl.classList.add('score-warning');
   }
+
+  // Drives the meter rule beneath the number (see .score-number::after)
+  scoreEl.style.setProperty('--score', recordingState.score);
 }
 
 // Update WPM
@@ -591,7 +594,7 @@ function renderHistoryLog() {
     else if (log.category === 'weak') borderCol = 'var(--color-weak)';
     else if (log.category === 'custom') borderCol = 'var(--accent)';
     
-    item.style.borderColor = borderCol;
+    item.style.borderLeftColor = borderCol;
     
     const altText = log.replacement === '[omit]' ? 'omit' : `use "${log.replacement}"`;
     
@@ -736,7 +739,7 @@ function startSession() {
     recordingState.challengeDuration = 0;
   }
   
-  document.getElementById('challengeStatus').textContent = mode === 'free' ? 'FREE PRACTICE' : 'COACH ACTIVE';
+  document.getElementById('challengeStatus').textContent = mode === 'free' ? 'Free practice' : 'Timed';
   document.getElementById('challengeStatus').style.color = mode === 'free' ? 'var(--text-muted)' : 'var(--safe)';
   
   try {
@@ -760,7 +763,7 @@ function endSession() {
     } catch(e){}
   }
   
-  document.getElementById('challengeStatus').textContent = 'OFF';
+  document.getElementById('challengeStatus').textContent = 'Off';
   document.getElementById('challengeStatus').style.color = 'var(--text-muted)';
   
   // Update final status message
@@ -768,8 +771,8 @@ function endSession() {
   const alertTitle = document.getElementById('alertTitle');
   const alertMessage = document.getElementById('alertMessage');
   alertIcon.className = 'fa-solid fa-circle-check';
-  alertTitle.textContent = 'Session Stopped';
-  alertMessage.innerHTML = `Integrity Score finished at <span class="replacement-word" style="background: var(--accent-glow); color: var(--accent); border-color: var(--accent)">${recordingState.score}%</span>. View analytics below.`;
+  alertTitle.textContent = 'Session ended';
+  alertMessage.innerHTML = `Speech integrity finished at <span class="replacement-word">${recordingState.score}%</span>. The breakdown is below.`;
 }
 
 function resetSession() {
@@ -800,8 +803,8 @@ function resetSession() {
   const alertTitle = document.getElementById('alertTitle');
   const alertMessage = document.getElementById('alertMessage');
   alertIcon.className = 'fa-solid fa-circle-check';
-  alertTitle.textContent = 'Speech Clarity';
-  alertMessage.textContent = 'Your speech is clear and professional. Keep it up!';
+  alertTitle.textContent = 'Coach';
+  alertMessage.textContent = 'Start a session and flagged words appear here with a stronger alternative.';
 }
 
 // Custom word management
@@ -811,7 +814,7 @@ function renderCustomWordsList() {
   
   const words = Object.entries(settings.customWords);
   if (words.length === 0) {
-    container.innerHTML = `<span style="font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">No custom target words added yet.</span>`;
+    container.innerHTML = `<span class="empty-note">No words of your own yet.</span>`;
     return;
   }
   
@@ -819,8 +822,8 @@ function renderCustomWordsList() {
     const tag = document.createElement('div');
     tag.className = 'custom-word-tag';
     tag.innerHTML = `
-      <strong>${word}</strong> &rarr; ${replacement || '[omit]'}
-      <button class="remove-tag-btn" data-word="${word}">&times;</button>
+      <span><strong>${word}</strong> &rarr; ${replacement || '[omit]'}</span>
+      <button type="button" class="remove-tag-btn" data-word="${word}" aria-label="Remove ${word}">&times;</button>
     `;
     container.appendChild(tag);
   });
@@ -914,53 +917,87 @@ function initCanvasVisuals() {
 }
 
 function resizeCanvas() {
-  if (canvas) {
-    canvas.width = canvas.parentElement.clientWidth;
-    canvas.height = canvas.parentElement.clientHeight;
-  }
+  if (!canvas) return;
+  // Back the canvas with the device pixel ratio so the trace stays crisp on
+  // retina displays, and keep drawing in CSS pixels.
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvasCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function animateWave() {
-  canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // Interpolation for smooth motion
-  waveAmp += (targetWaveAmp - waveAmp) * 0.1;
-  
-  // Slowly decay target amp if recording
-  if (recordingState.isRecording) {
-    if (targetWaveAmp > 4) {
-      targetWaveAmp -= 0.15;
-    } else {
-      targetWaveAmp = 4; // idle hum
-    }
+  const cssWidth = canvas.clientWidth;
+  const cssHeight = canvas.clientHeight;
+  canvasCtx.clearRect(0, 0, cssWidth, cssHeight);
+
+  if (prefersReducedMotion()) {
+    // Hold a steady level rather than animating amplitude.
+    targetWaveAmp = recordingState.isRecording ? 4 : 0;
+    waveAmp = targetWaveAmp;
   } else {
-    targetWaveAmp = 0; // flatline
+    // Interpolation for smooth motion
+    waveAmp += (targetWaveAmp - waveAmp) * 0.1;
+
+    // Slowly decay target amp if recording
+    if (recordingState.isRecording) {
+      if (targetWaveAmp > 4) {
+        targetWaveAmp -= 0.15;
+      } else {
+        targetWaveAmp = 4; // idle hum
+      }
+    } else {
+      targetWaveAmp = 0; // flatline
+    }
   }
-  
-  wavePhase += 0.06;
-  const midY = canvas.height / 2;
-  const width = canvas.width;
-  
+
+  // Hold the trace still when the user has asked for reduced motion; the level
+  // is still shown, it just does not travel.
+  if (!prefersReducedMotion()) {
+    wavePhase += 0.06;
+  }
+
+  const midY = cssHeight / 2;
+  const width = cssWidth;
+  const baseline = 'rgba(174, 184, 196, 0.14)';
+
+  // Draw the centre line first — it reads as the zero level of a meter.
+  canvasCtx.beginPath();
+  canvasCtx.strokeStyle = baseline;
+  canvasCtx.lineWidth = 1;
+  canvasCtx.moveTo(0, midY + 0.5);
+  canvasCtx.lineTo(width, midY + 0.5);
+  canvasCtx.stroke();
+
   if (waveAmp > 0.05) {
-    // 3 overlaying wave paths
+    // Three traces in the interface greys, plus the live red on the leading
+    // one — same restraint as the rest of the console.
     const waves = [
-      { color: 'hsla(260, 85%, 65%, 0.45)', freq: 0.018, ampMult: 1.0, phaseOffset: 0 },
-      { color: 'hsla(174, 90%, 45%, 0.35)', freq: 0.024, ampMult: 0.7, phaseOffset: Math.PI / 2.5 },
-      { color: 'hsla(195, 90%, 50%, 0.25)', freq: 0.012, ampMult: 0.5, phaseOffset: -Math.PI / 3 }
+      { color: 'rgba(255, 74, 61, 0.55)',    freq: 0.018, ampMult: 1.0, phaseOffset: 0 },
+      { color: 'rgba(237, 241, 245, 0.30)',  freq: 0.024, ampMult: 0.7, phaseOffset: Math.PI / 2.5 },
+      { color: 'rgba(174, 184, 196, 0.18)',  freq: 0.012, ampMult: 0.5, phaseOffset: -Math.PI / 3 }
     ];
-    
-    canvasCtx.lineWidth = 2.5;
+
+    canvasCtx.lineWidth = 1.75;
     canvasCtx.lineCap = 'round';
-    
+    canvasCtx.lineJoin = 'round';
+
+    // Scale the trace to the box so it never clips into hard corners.
+    const ampScale = (midY - 3) / 18;
+
     waves.forEach(w => {
       canvasCtx.beginPath();
       canvasCtx.strokeStyle = w.color;
-      
-      for (let x = 0; x < width; x += 3) {
+
+      for (let x = 0; x <= width; x += 2) {
         // Taper edges with Math.sin envelope
         const envelope = Math.sin((x / width) * Math.PI);
-        const y = midY + Math.sin(x * w.freq + wavePhase + w.phaseOffset) * waveAmp * w.ampMult * envelope * 12;
-        
+        const y = midY + Math.sin(x * w.freq + wavePhase + w.phaseOffset) * waveAmp * w.ampMult * envelope * ampScale;
+
         if (x === 0) {
           canvasCtx.moveTo(x, y);
         } else {
@@ -969,16 +1006,8 @@ function animateWave() {
       }
       canvasCtx.stroke();
     });
-  } else {
-    // Draw flat line
-    canvasCtx.beginPath();
-    canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    canvasCtx.lineWidth = 1.5;
-    canvasCtx.moveTo(0, midY);
-    canvasCtx.lineTo(width, midY);
-    canvasCtx.stroke();
   }
-  
+
   animationFrameId = requestAnimationFrame(animateWave);
 }
 
@@ -1021,18 +1050,21 @@ function updateConfidenceDisplay(confidence) {
   if (confEl) {
     const pct = Math.round(confidence * 100);
     confEl.textContent = pct + '%';
-    if (confBar) confBar.style.width = pct + '%';
+    if (confBar) {
+      confBar.style.width = pct + '%';
+      if (confBar.parentElement) confBar.parentElement.setAttribute('aria-valuenow', pct);
+    }
     
-    // Color based on confidence level
+    // Colour by confidence level: good / caution / poor
     if (pct >= 85) {
-      confEl.style.color = 'var(--safe)';
-      if (confBar) confBar.style.background = 'var(--safe)';
+      confEl.style.color = 'var(--good)';
+      if (confBar) confBar.style.background = 'var(--good)';
     } else if (pct >= 60) {
-      confEl.style.color = 'var(--color-filler)';
-      if (confBar) confBar.style.background = 'var(--color-filler)';
+      confEl.style.color = 'var(--warn)';
+      if (confBar) confBar.style.background = 'var(--warn)';
     } else {
-      confEl.style.color = 'var(--color-informal)';
-      if (confBar) confBar.style.background = 'var(--color-informal)';
+      confEl.style.color = 'var(--live)';
+      if (confBar) confBar.style.background = 'var(--live)';
     }
   }
 }
@@ -1164,9 +1196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Please end the active session before switching modes.', 'warning');
         return;
       }
-      document.querySelectorAll('.challenge-card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.challenge-card').forEach(c => {
+        c.classList.remove('active');
+        c.setAttribute('aria-pressed', 'false');
+      });
       card.classList.add('active');
-      
+      card.setAttribute('aria-pressed', 'true');
+
       const mode = card.dataset.mode;
       recordingState.challengeMode = mode;
       
@@ -1181,11 +1217,29 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Settings Modal Handlers
   const modal = document.getElementById('settingsModal');
-  document.getElementById('openSettingsBtn').onclick = () => modal.classList.add('active');
-  document.getElementById('closeSettingsBtn').onclick = () => modal.classList.remove('active');
-  modal.onclick = (e) => {
-    if (e.target === modal) modal.classList.remove('active');
+  const openSettingsBtn = document.getElementById('openSettingsBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+
+  const openSettings = () => {
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    closeSettingsBtn.focus();
   };
+  const closeSettings = () => {
+    if (!modal.classList.contains('active')) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    openSettingsBtn.focus();
+  };
+
+  openSettingsBtn.onclick = openSettings;
+  closeSettingsBtn.onclick = closeSettings;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeSettings();
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSettings();
+  });
   
   // Form updates
   document.getElementById('toggleFillers').onchange = (e) => {
