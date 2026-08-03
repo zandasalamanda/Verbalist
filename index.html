@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verbalist | Eliminate Filler & Brainrot Words</title>
+  <title>Verbalist | Professional Speaking Coach</title>
+  <meta name="description" content="Verbalist is an AI-powered professional speaking coach that helps you eliminate filler words, improve sentence structure, and speak with clarity and confidence.">
   <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
   <!-- FontAwesome Icons -->
@@ -11,16 +12,21 @@
 </head>
 <body>
 
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
   <div class="app-container">
     <!-- Header -->
     <header>
       <div class="brand">
-        <div class="brand-icon"><i class="fa-solid fa-microphone-slash"></i></div>
+        <div class="brand-icon">
+          <img src="assets/Verblogo.png" alt="Verbalist Logo" class="brand-logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fa-solid fa-waveform-lines\'></i>';">
+        </div>
         <div>
           <h1>Verbalist</h1>
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">AI Speech Coach</p>
+          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Professional Speaking Coach</p>
         </div>
-        <span>v1.0</span>
+        <span>v2.0</span>
       </div>
       <div class="header-actions">
         <button class="btn btn-secondary" id="openSettingsBtn" title="Settings">
@@ -42,7 +48,7 @@
           </div>
           <div class="alert-content">
             <p class="alert-title" id="alertTitle">Speech Clarity</p>
-            <p class="alert-message" id="alertMessage">Speech is clear. Say a filler or brainrot word to see suggestions.</p>
+            <p class="alert-message" id="alertMessage">Your speech is clear and professional. Keep it up!</p>
           </div>
         </div>
 
@@ -50,10 +56,19 @@
         <div class="transcription-panel" id="transcriptionPanel">
           <div class="panel-header">
             <div class="panel-title">
-              <span class="pulse-dot"></span> Live Speech stream
+              <span class="pulse-dot"></span> Live Transcription
             </div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);" id="languageBadge">
-              English (United States)
+            <div class="panel-header-right">
+              <div class="confidence-meter" id="confidenceMeter">
+                <span class="confidence-label">Accuracy</span>
+                <div class="confidence-bar-outer">
+                  <div class="confidence-bar-inner" id="confidenceBar"></div>
+                </div>
+                <span class="confidence-value" id="confidenceValue">—</span>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);" id="languageBadge">
+                English (United States)
+              </div>
             </div>
           </div>
           
@@ -110,8 +125,8 @@
               <span class="challenge-time">2:00 min</span>
             </div>
             <div class="challenge-card" data-mode="presentation">
-              <span class="challenge-name">Product Demo</span>
-              <span class="challenge-desc">Elaborate topics</span>
+              <span class="challenge-name">Presentation</span>
+              <span class="challenge-desc">Extended topics</span>
               <span class="challenge-time">3:00 min</span>
             </div>
           </div>
@@ -149,12 +164,12 @@
             <span class="metric-mini-val" id="speechSpeedWpm">0</span>
           </div>
           <div class="metric-mini-card">
-            <span class="metric-mini-label">Flagged Words</span>
-            <span class="metric-mini-val" id="flaggedWordsCount" style="color: var(--color-brainrot);">0</span>
+            <span class="metric-mini-label">Flagged</span>
+            <span class="metric-mini-val" id="flaggedWordsCount" style="color: var(--color-informal);">0</span>
           </div>
         </div>
 
-        <!-- Filter Category Warning Summary -->
+        <!-- Filter Category Summary -->
         <div class="widget-card">
           <div class="widget-header" style="margin-bottom: 0.75rem;">
             <h2 class="widget-title"><i class="fa-solid fa-list-check" style="color: var(--accent);"></i> Filters</h2>
@@ -164,25 +179,33 @@
             <div class="category-row">
               <div class="category-info">
                 <div class="category-indicator cat-fillers"></div>
-                <span class="category-label">Generic Fillers</span>
+                <span class="category-label">Filler Words</span>
               </div>
               <span class="category-count" id="count-fillers">0</span>
             </div>
             
             <div class="category-row">
               <div class="category-info">
-                <div class="category-indicator cat-brainrot"></div>
-                <span class="category-label">Brainrot Slang</span>
+                <div class="category-indicator cat-informal"></div>
+                <span class="category-label">Informal Language</span>
               </div>
-              <span class="category-count" id="count-brainrot">0</span>
+              <span class="category-count" id="count-informal">0</span>
             </div>
             
             <div class="category-row">
               <div class="category-info">
-                <div class="category-indicator cat-corporate"></div>
-                <span class="category-label">Corporate Jargon</span>
+                <div class="category-indicator cat-jargon"></div>
+                <span class="category-label">Overused Jargon</span>
               </div>
-              <span class="category-count" id="count-corporate">0</span>
+              <span class="category-count" id="count-jargon">0</span>
+            </div>
+
+            <div class="category-row">
+              <div class="category-info">
+                <div class="category-indicator cat-weak"></div>
+                <span class="category-label">Weak Phrasing</span>
+              </div>
+              <span class="category-count" id="count-weak">0</span>
             </div>
           </div>
         </div>
@@ -197,7 +220,7 @@
       <!-- Frequencies Table -->
       <div class="analytics-column">
         <div class="column-header">
-          <h3 class="column-title"><i class="fa-solid fa-chart-bar" style="color: var(--color-filler);"></i> Top Offending Words</h3>
+          <h3 class="column-title"><i class="fa-solid fa-chart-bar" style="color: var(--color-filler);"></i> Top Flagged Words</h3>
         </div>
         <div class="frequency-list" id="frequencyList"></div>
       </div>
@@ -205,19 +228,27 @@
       <!-- History Log Timeline -->
       <div class="analytics-column">
         <div class="column-header">
-          <h3 class="column-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--color-corporate);"></i> Timeline & Suggestions</h3>
+          <h3 class="column-title"><i class="fa-solid fa-clock-rotate-left" style="color: var(--color-jargon);"></i> Timeline & Suggestions</h3>
           <button class="btn btn-secondary" id="exportLogBtn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" title="Export transcript report">
-            <i class="fa-solid fa-download"></i> Export Log
+            <i class="fa-solid fa-download"></i> Export
           </button>
         </div>
         <div class="history-log" id="historyLog"></div>
+      </div>
+
+      <!-- Sentence Analysis Panel -->
+      <div class="analytics-column analytics-full-width">
+        <div class="column-header">
+          <h3 class="column-title"><i class="fa-solid fa-magnifying-glass-chart" style="color: var(--color-weak);"></i> Sentence Analysis</h3>
+        </div>
+        <div class="sentence-analysis-panel" id="sentenceAnalysis"></div>
       </div>
 
     </section>
 
     <!-- Footer -->
     <footer>
-      <p>Verbalist AI Speech Coach &copy; 2026. Made to polish communication and eliminate brainrot.</p>
+      <p>Verbalist Professional Speaking Coach &copy; 2026. Speak with clarity, confidence, and precision.</p>
     </footer>
   </div>
 
@@ -255,12 +286,12 @@
 
         <!-- Filter toggles -->
         <div>
-          <h3 class="settings-section-title">Word Category Toggles</h3>
+          <h3 class="settings-section-title">Detection Categories</h3>
           <div class="settings-group">
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Generic Fillers</span>
-                <span class="setting-desc">Detect "like", "literally", "basically", etc.</span>
+                <span class="setting-label">Filler Words</span>
+                <span class="setting-desc">Detect "um", "like", "you know", "basically", etc.</span>
               </div>
               <label class="switch">
                 <input type="checkbox" id="toggleFillers" checked>
@@ -270,22 +301,33 @@
             
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Gen-Z & Brainrot Slang</span>
-                <span class="setting-desc">Detect "skibidi", "rizz", "gyatt", "yap", etc.</span>
+                <span class="setting-label">Informal Language</span>
+                <span class="setting-desc">Detect casual slang: "gonna", "wanna", "awesome", etc.</span>
               </div>
               <label class="switch">
-                <input type="checkbox" id="toggleBrainrot" checked>
+                <input type="checkbox" id="toggleInformal" checked>
                 <span class="slider"></span>
               </label>
             </div>
             
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Corporate Clichés</span>
+                <span class="setting-label">Overused Jargon</span>
                 <span class="setting-desc">Detect "synergy", "circle back", "pivot", etc.</span>
               </div>
               <label class="switch">
-                <input type="checkbox" id="toggleCorporate" checked>
+                <input type="checkbox" id="toggleJargon" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-row-flex">
+              <div class="setting-info">
+                <span class="setting-label">Weak Phrasing</span>
+                <span class="setting-desc">Detect hedging: "I think maybe", "sorry but", etc.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleWeak" checked>
                 <span class="slider"></span>
               </label>
             </div>
@@ -294,12 +336,12 @@
 
         <!-- Audio Warnings -->
         <div>
-          <h3 class="settings-section-title">Warning Feedback</h3>
+          <h3 class="settings-section-title">Feedback Preferences</h3>
           <div class="settings-group">
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Audio Alert Beep</span>
-                <span class="setting-desc">Play a gentle tone on word detection.</span>
+                <span class="setting-label">Audio Alert</span>
+                <span class="setting-desc">Play a tone when flagged language is detected.</span>
               </div>
               <label class="switch">
                 <input type="checkbox" id="toggleAudioAlert" checked>
@@ -310,7 +352,7 @@
             <div class="setting-row-flex">
               <div class="setting-info">
                 <span class="setting-label">Alert Volume</span>
-                <span class="setting-desc">Control warning tone sound volume.</span>
+                <span class="setting-desc">Control alert tone volume.</span>
               </div>
               <div>
                 <input type="range" class="range-slider" id="alertVolume" min="0" max="1" step="0.1" value="0.4">
@@ -319,8 +361,8 @@
 
             <div class="setting-row-flex">
               <div class="setting-info">
-                <span class="setting-label">Visual Warnings</span>
-                <span class="setting-desc">Flash/shake UI on word detection.</span>
+                <span class="setting-label">Visual Feedback</span>
+                <span class="setting-desc">Flash and shake UI on detection.</span>
               </div>
               <label class="switch">
                 <input type="checkbox" id="toggleVisualAlert" checked>
@@ -332,7 +374,7 @@
 
         <!-- Custom Word Lists -->
         <div>
-          <h3 class="settings-section-title">Custom Forbidden Words</h3>
+          <h3 class="settings-section-title">Custom Flagged Words</h3>
           <div class="settings-group">
             <div style="margin-bottom: 0.5rem;">
               <span class="setting-label">Add Custom Target</span>

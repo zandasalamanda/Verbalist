@@ -54,7 +54,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n🚀 Verbalist AI Speech Coach is running locally!`);
+  console.log(`\n🎙️  Verbalist Professional Speaking Coach is running!`);
   console.log(`🔊 Microphone access will work correctly over this connection.`);
   console.log(`👉 Open http://localhost:${PORT} in Google Chrome, Safari, or Edge to begin practicing.\n`);
   console.log(`Press Ctrl+C to stop the server.\n`);

@@ -9,8 +9,9 @@ let recordingState = {
   score: 100,
   categoryCounts: {
     fillers: 0,
-    brainrot: 0,
-    corporate: 0,
+    informal: 0,
+    jargon: 0,
+    weak: 0,
     custom: 0
   },
   offendingWords: {}, // { word: { count: x, category: y } }
@@ -23,8 +24,9 @@ let recordingState = {
 let settings = {
   categories: {
     fillers: true,
-    brainrot: true,
-    corporate: true
+    informal: true,
+    jargon: true,
+    weak: true
   },
   audioAlert: true,
   visualAlert: true,
@@ -44,7 +46,7 @@ function loadSettings() {
     try {
       settings = JSON.parse(saved);
       // Ensure fields exist in case structure updated
-      if (!settings.categories) settings.categories = { fillers: true, brainrot: true, corporate: true };
+      if (!settings.categories) settings.categories = { fillers: true, informal: true, jargon: true, weak: true };
       if (settings.audioAlert === undefined) settings.audioAlert = true;
       if (settings.visualAlert === undefined) settings.visualAlert = true;
       if (settings.alertVolume === undefined) settings.alertVolume = 0.4;
@@ -71,7 +73,7 @@ function initSpeechRecognition() {
   
   if (!SpeechRecognition) {
     const viewport = document.getElementById('transcriptionViewport');
-    viewport.innerHTML = `<div style="color: var(--color-brainrot); text-align: center; padding: 2rem;">
+    viewport.innerHTML = `<div style="color: var(--color-informal); text-align: center; padding: 2rem;">
       <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
       <p style="font-weight: 600;">Web Speech API is not supported in this browser.</p>
       <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
@@ -85,6 +87,7 @@ function initSpeechRecognition() {
   recognition = new SpeechRecognition();
   recognition.continuous = true;
   recognition.interimResults = true;
+  recognition.maxAlternatives = 3;
   recognition.lang = settings.language;
 
   recognition.onstart = () => {
@@ -127,7 +130,7 @@ function initSpeechRecognition() {
     console.error("Speech Recognition Error:", event.error);
     if (event.error === 'not-allowed') {
       const viewport = document.getElementById('transcriptionViewport');
-      viewport.innerHTML = `<div style="color: var(--color-brainrot); text-align: center; padding: 1rem;">
+      viewport.innerHTML = `<div style="color: var(--color-informal); text-align: center; padding: 1rem;">
         <i class="fa-solid fa-microphone-slash" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
         <p style="font-weight: 600;">Microphone Access Denied</p>
         <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
@@ -145,11 +148,26 @@ function initSpeechRecognition() {
     targetWaveAmp = 18;
     
     for (let i = event.resultIndex; i < event.results.length; ++i) {
-      const transcriptChunk = event.results[i][0].transcript;
+      // Pick highest confidence alternative
+      let bestAlt = event.results[i][0];
+      for (let a = 1; a < event.results[i].length; a++) {
+        if (event.results[i][a].confidence > bestAlt.confidence) {
+          bestAlt = event.results[i][a];
+        }
+      }
+      
+      const transcriptChunk = bestAlt.transcript;
+      
       if (event.results[i].isFinal) {
+        // Update confidence display
+        updateConfidenceDisplay(bestAlt.confidence);
+        
         // Append to buffer and parse
         finalTranscriptBuffer += transcriptChunk + ' ';
         processFinalText(transcriptChunk);
+        
+        // Run sentence analysis
+        analyzeSentence(transcriptChunk);
       } else {
         interimTranscript += transcriptChunk;
       }
@@ -175,14 +193,19 @@ function getActiveDictionary() {
       active[word.toLowerCase()] = { category: 'fillers', replacement };
     }
   }
-  if (settings.categories.brainrot) {
-    for (const [word, replacement] of Object.entries(WORD_DICTIONARY.brainrot.words)) {
-      active[word.toLowerCase()] = { category: 'brainrot', replacement };
+  if (settings.categories.informal) {
+    for (const [word, replacement] of Object.entries(WORD_DICTIONARY.informal.words)) {
+      active[word.toLowerCase()] = { category: 'informal', replacement };
     }
   }
-  if (settings.categories.corporate) {
-    for (const [word, replacement] of Object.entries(WORD_DICTIONARY.corporate.words)) {
-      active[word.toLowerCase()] = { category: 'corporate', replacement };
+  if (settings.categories.jargon) {
+    for (const [word, replacement] of Object.entries(WORD_DICTIONARY.jargon.words)) {
+      active[word.toLowerCase()] = { category: 'jargon', replacement };
+    }
+  }
+  if (settings.categories.weak) {
+    for (const [word, replacement] of Object.entries(WORD_DICTIONARY.weak.words)) {
+      active[word.toLowerCase()] = { category: 'weak', replacement };
     }
   }
   // Custom Words
@@ -327,18 +350,22 @@ function triggerAlert(word, replacement, category) {
   let glow = 'var(--color-filler-glow)';
   let label = 'Filler Word Detected';
   
-  if (category === 'brainrot') {
-    color = 'var(--color-brainrot)';
-    glow = 'var(--color-brainrot-glow)';
-    label = 'Brainrot Word Detected';
-  } else if (category === 'corporate') {
-    color = 'var(--color-corporate)';
-    glow = 'var(--color-corporate-glow)';
-    label = 'Jargon Alert';
+  if (category === 'informal') {
+    color = 'var(--color-informal)';
+    glow = 'var(--color-informal-glow)';
+    label = 'Informal Language Detected';
+  } else if (category === 'jargon') {
+    color = 'var(--color-jargon)';
+    glow = 'var(--color-jargon-glow)';
+    label = 'Overused Jargon Detected';
+  } else if (category === 'weak') {
+    color = 'var(--color-weak)';
+    glow = 'var(--color-weak-glow)';
+    label = 'Weak Phrasing Detected';
   } else if (category === 'custom') {
     color = 'var(--accent)';
     glow = 'var(--accent-glow)';
-    label = 'Custom Block Word';
+    label = 'Custom Flagged Word';
   }
   
   // Update CSS custom properties of alert banner
@@ -379,7 +406,7 @@ function triggerAlert(word, replacement, category) {
     } else {
       alertIcon.className = 'fa-solid fa-circle-check';
       alertTitle.textContent = 'Speech Clarity';
-      alertMessage.textContent = 'Speech is clear. Say a filler or brainrot word to see suggestions.';
+      alertMessage.textContent = 'Your speech is clear and professional. Keep it up!';
     }
   }, 4500);
 }
@@ -400,8 +427,8 @@ function playSynthSound(category) {
     
     const osc = synthAudioContext.createOscillator();
     
-    if (category === 'brainrot') {
-      // Slightly annoying buzzer sound
+    if (category === 'informal') {
+      // Subtle low buzz for informal language
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(200, synthAudioContext.currentTime);
       osc.frequency.linearRampToValueAtTime(140, synthAudioContext.currentTime + 0.25);
@@ -417,8 +444,8 @@ function playSynthSound(category) {
       osc.start();
       gainNode.gain.exponentialRampToValueAtTime(0.01, synthAudioContext.currentTime + 0.25);
       osc.stop(synthAudioContext.currentTime + 0.26);
-    } else if (category === 'corporate') {
-      // Tech-y laser ping
+    } else if (category === 'jargon') {
+      // Clean descending ping for jargon
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(800, synthAudioContext.currentTime);
       osc.frequency.exponentialRampToValueAtTime(300, synthAudioContext.currentTime + 0.15);
@@ -429,8 +456,20 @@ function playSynthSound(category) {
       osc.start();
       gainNode.gain.exponentialRampToValueAtTime(0.01, synthAudioContext.currentTime + 0.18);
       osc.stop(synthAudioContext.currentTime + 0.2);
+    } else if (category === 'weak') {
+      // Soft double-tap for weak phrasing
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, synthAudioContext.currentTime); // A4
+      osc.frequency.setValueAtTime(392, synthAudioContext.currentTime + 0.12); // G4
+      
+      osc.connect(gainNode);
+      gainNode.connect(synthAudioContext.destination);
+      
+      osc.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.01, synthAudioContext.currentTime + 0.3);
+      osc.stop(synthAudioContext.currentTime + 0.32);
     } else {
-      // Normal filler word: soft clean bell sound
+      // Default filler word: soft clean bell sound
       osc.type = 'sine';
       osc.frequency.setValueAtTime(587.33, synthAudioContext.currentTime); // D5
       
@@ -449,11 +488,12 @@ function playSynthSound(category) {
 // Update integrity score
 function updateScore() {
   // Integrity Score Calculation:
-  // Starts at 100%. Each filler word: -3%; brainrot: -5%; corporate: -2%; custom: -3%
+  // Starts at 100%. Each filler word: -3%; informal: -4%; jargon: -2%; weak: -4%; custom: -3%
   let scoreDeduction = 
     (recordingState.categoryCounts.fillers * 3) +
-    (recordingState.categoryCounts.brainrot * 5) +
-    (recordingState.categoryCounts.corporate * 2) +
+    (recordingState.categoryCounts.informal * 4) +
+    (recordingState.categoryCounts.jargon * 2) +
+    (recordingState.categoryCounts.weak * 4) +
     (recordingState.categoryCounts.custom * 3);
   
   recordingState.score = Math.max(0, 100 - scoreDeduction);
@@ -488,8 +528,9 @@ function updateWpmSpeed() {
 function updateSidebarStats() {
   document.getElementById('flaggedWordsCount').textContent = recordingState.flaggedCount;
   document.getElementById('count-fillers').textContent = recordingState.categoryCounts.fillers;
-  document.getElementById('count-brainrot').textContent = recordingState.categoryCounts.brainrot;
-  document.getElementById('count-corporate').textContent = recordingState.categoryCounts.corporate;
+  document.getElementById('count-informal').textContent = recordingState.categoryCounts.informal;
+  document.getElementById('count-jargon').textContent = recordingState.categoryCounts.jargon;
+  document.getElementById('count-weak').textContent = recordingState.categoryCounts.weak;
 }
 
 // Render word frequency distribution list
@@ -514,8 +555,9 @@ function renderFrequencyList() {
     const barWidthPercent = (info.count / maxCount) * 100;
     
     let barColor = 'var(--color-filler)';
-    if (info.category === 'brainrot') barColor = 'var(--color-brainrot)';
-    else if (info.category === 'corporate') barColor = 'var(--color-corporate)';
+    if (info.category === 'informal') barColor = 'var(--color-informal)';
+    else if (info.category === 'jargon') barColor = 'var(--color-jargon)';
+    else if (info.category === 'weak') barColor = 'var(--color-weak)';
     else if (info.category === 'custom') barColor = 'var(--accent)';
     
     item.innerHTML = `
@@ -544,8 +586,9 @@ function renderHistoryLog() {
     item.className = 'history-item';
     
     let borderCol = 'var(--color-filler)';
-    if (log.category === 'brainrot') borderCol = 'var(--color-brainrot)';
-    else if (log.category === 'corporate') borderCol = 'var(--color-corporate)';
+    if (log.category === 'informal') borderCol = 'var(--color-informal)';
+    else if (log.category === 'jargon') borderCol = 'var(--color-jargon)';
+    else if (log.category === 'weak') borderCol = 'var(--color-weak)';
     else if (log.category === 'custom') borderCol = 'var(--accent)';
     
     item.style.borderColor = borderCol;
@@ -646,12 +689,7 @@ function triggerChallengeEndSummary() {
     rating = "Great job! A few filler words slipped in, but your message is clear.";
   }
   
-  alert(`🏁 Challenge Session Complete! \n\n` + 
-        `⏱ Mode: ${recordingState.challengeMode.toUpperCase()}\n` +
-        `🎯 Speech Integrity: ${recordingState.score}%\n` +
-        `📝 Words Spoken: ${recordingState.totalWords}\n` +
-        `⚠️ Total Flagged Words: ${recordingState.flaggedCount}\n\n` +
-        `Coach Rating: ${rating}`);
+  showToast(`Session Complete! Score: ${recordingState.score}% | Words: ${recordingState.totalWords} | Flagged: ${recordingState.flaggedCount} — ${rating}`, 'success');
 }
 
 // Session Controls
@@ -671,7 +709,7 @@ function startSession() {
   recordingState.totalWords = 0;
   recordingState.flaggedCount = 0;
   recordingState.score = 100;
-  recordingState.categoryCounts = { fillers: 0, brainrot: 0, corporate: 0, custom: 0 };
+  recordingState.categoryCounts = { fillers: 0, informal: 0, jargon: 0, weak: 0, custom: 0 };
   recordingState.offendingWords = {};
   recordingState.historyLog = [];
   
@@ -743,7 +781,7 @@ function resetSession() {
   recordingState.totalWords = 0;
   recordingState.flaggedCount = 0;
   recordingState.score = 100;
-  recordingState.categoryCounts = { fillers: 0, brainrot: 0, corporate: 0, custom: 0 };
+  recordingState.categoryCounts = { fillers: 0, informal: 0, jargon: 0, weak: 0, custom: 0 };
   recordingState.offendingWords = {};
   recordingState.historyLog = [];
   
@@ -763,7 +801,7 @@ function resetSession() {
   const alertMessage = document.getElementById('alertMessage');
   alertIcon.className = 'fa-solid fa-circle-check';
   alertTitle.textContent = 'Speech Clarity';
-  alertMessage.textContent = 'Speech is clear. Say a filler or brainrot word to see suggestions.';
+  alertMessage.textContent = 'Your speech is clear and professional. Keep it up!';
 }
 
 // Custom word management
@@ -801,7 +839,7 @@ function renderCustomWordsList() {
 // Export Session logs to text
 function exportSessionLog() {
   if (recordingState.historyLog.length === 0 && !finalTranscriptBuffer) {
-    alert("Nothing to export! Record a speech session first.");
+    showToast('Nothing to export. Record a speech session first.', 'warning');
     return;
   }
   
@@ -815,8 +853,9 @@ function exportSessionLog() {
   logText += `- Speed: ${document.getElementById('speechSpeedWpm').textContent} Words/Min\n`;
   logText += `- Total Flagged Words: ${recordingState.flaggedCount}\n`;
   logText += `  * Fillers: ${recordingState.categoryCounts.fillers}\n`;
-  logText += `  * Brainrot Slang: ${recordingState.categoryCounts.brainrot}\n`;
-  logText += `  * Corporate Jargon: ${recordingState.categoryCounts.corporate}\n`;
+  logText += `  * Informal Language: ${recordingState.categoryCounts.informal}\n`;
+  logText += `  * Overused Jargon: ${recordingState.categoryCounts.jargon}\n`;
+  logText += `  * Weak Phrasing: ${recordingState.categoryCounts.weak}\n`;
   logText += `  * Custom Words: ${recordingState.categoryCounts.custom}\n\n`;
   
   logText += `[TOP OFFENDING WORDS]\n`;
@@ -943,6 +982,150 @@ function animateWave() {
   animationFrameId = requestAnimationFrame(animateWave);
 }
 
+// Toast Notification System (replaces native alert() calls)
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  let icon = 'fa-circle-info';
+  if (type === 'warning') icon = 'fa-triangle-exclamation';
+  else if (type === 'success') icon = 'fa-circle-check';
+  else if (type === 'error') icon = 'fa-circle-xmark';
+  
+  toast.innerHTML = `
+    <i class="fa-solid ${icon}"></i>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Trigger animation
+  requestAnimationFrame(() => toast.classList.add('toast-visible'));
+  
+  // Auto-dismiss after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Confidence tracking for speech recognition
+let lastConfidence = 0;
+function updateConfidenceDisplay(confidence) {
+  lastConfidence = confidence;
+  const confEl = document.getElementById('confidenceValue');
+  const confBar = document.getElementById('confidenceBar');
+  if (confEl) {
+    const pct = Math.round(confidence * 100);
+    confEl.textContent = pct + '%';
+    if (confBar) confBar.style.width = pct + '%';
+    
+    // Color based on confidence level
+    if (pct >= 85) {
+      confEl.style.color = 'var(--safe)';
+      if (confBar) confBar.style.background = 'var(--safe)';
+    } else if (pct >= 60) {
+      confEl.style.color = 'var(--color-filler)';
+      if (confBar) confBar.style.background = 'var(--color-filler)';
+    } else {
+      confEl.style.color = 'var(--color-informal)';
+      if (confBar) confBar.style.background = 'var(--color-informal)';
+    }
+  }
+}
+
+// Sentence Analysis Engine
+let sentenceBuffer = [];
+let sentenceIssues = [];
+
+function analyzeSentence(text) {
+  const issues = [];
+  const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+  const wordCount = words.length;
+  
+  // Check for run-on sentence (overly long without natural breaks)
+  if (wordCount > 40) {
+    issues.push({
+      type: 'run-on',
+      severity: 'warning',
+      message: `Long sentence detected (${wordCount} words). Consider breaking into shorter, clearer statements.`,
+      suggestion: 'Use pauses and break complex ideas into 15-25 word sentences for maximum clarity.'
+    });
+  }
+  
+  // Check for excessive filler density
+  const activeDict = getActiveDictionary();
+  const lowerText = text.toLowerCase();
+  let fillerCount = 0;
+  for (const key of Object.keys(activeDict)) {
+    if (activeDict[key].category === 'fillers') {
+      const regex = new RegExp(`\\b${key}\\b`, 'gi');
+      const matches = lowerText.match(regex);
+      if (matches) fillerCount += matches.length;
+    }
+  }
+  
+  if (wordCount > 5 && fillerCount / wordCount > 0.2) {
+    issues.push({
+      type: 'filler-density',
+      severity: 'caution',
+      message: `High filler density: ${fillerCount} filler words in ${wordCount} words (${Math.round(fillerCount/wordCount*100)}%).`,
+      suggestion: 'Slow down and embrace silence instead of filling gaps with placeholder words.'
+    });
+  }
+  
+  // Check for repeated words (stuttering/uncertainty pattern)
+  for (let i = 0; i < words.length - 1; i++) {
+    if (words[i].toLowerCase() === words[i+1].toLowerCase() && words[i].length > 2) {
+      issues.push({
+        type: 'repetition',
+        severity: 'info',
+        message: `Repeated word "${words[i]}" detected — may indicate hesitation.`,
+        suggestion: 'Pause and collect your thoughts before continuing.'
+      });
+      break; // Only flag once per chunk
+    }
+  }
+  
+  if (issues.length > 0) {
+    sentenceIssues.unshift(...issues);
+    // Keep only last 20 issues
+    if (sentenceIssues.length > 20) sentenceIssues = sentenceIssues.slice(0, 20);
+    renderSentenceAnalysis();
+  }
+}
+
+function renderSentenceAnalysis() {
+  const container = document.getElementById('sentenceAnalysis');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (sentenceIssues.length === 0) return;
+  
+  sentenceIssues.forEach(issue => {
+    const item = document.createElement('div');
+    item.className = `sentence-issue severity-${issue.severity}`;
+    
+    let icon = 'fa-circle-info';
+    if (issue.severity === 'warning') icon = 'fa-triangle-exclamation';
+    else if (issue.severity === 'caution') icon = 'fa-bolt';
+    
+    item.innerHTML = `
+      <div class="issue-header">
+        <i class="fa-solid ${icon}"></i>
+        <span class="issue-type">${issue.type.replace('-', ' ')}</span>
+      </div>
+      <p class="issue-message">${issue.message}</p>
+      <p class="issue-suggestion"><i class="fa-solid fa-lightbulb"></i> ${issue.suggestion}</p>
+    `;
+    container.appendChild(item);
+  });
+}
+
 // Bind DOM events on document load
 document.addEventListener('DOMContentLoaded', () => {
   // Load settings & render tags
@@ -951,8 +1134,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Sync setting form UI
   document.getElementById('toggleFillers').checked = settings.categories.fillers;
-  document.getElementById('toggleBrainrot').checked = settings.categories.brainrot;
-  document.getElementById('toggleCorporate').checked = settings.categories.corporate;
+  document.getElementById('toggleInformal').checked = settings.categories.informal;
+  document.getElementById('toggleJargon').checked = settings.categories.jargon;
+  document.getElementById('toggleWeak').checked = settings.categories.weak;
   document.getElementById('toggleAudioAlert').checked = settings.audioAlert;
   document.getElementById('toggleVisualAlert').checked = settings.visualAlert;
   document.getElementById('alertVolume').value = settings.alertVolume;
@@ -977,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.challenge-card').forEach(card => {
     card.onclick = (e) => {
       if (recordingState.isRecording) {
-        alert("Please end the active practice session before changing challenges.");
+        showToast('Please end the active session before switching modes.', 'warning');
         return;
       }
       document.querySelectorAll('.challenge-card').forEach(c => c.classList.remove('active'));
@@ -1008,12 +1192,16 @@ document.addEventListener('DOMContentLoaded', () => {
     settings.categories.fillers = e.target.checked;
     saveSettings();
   };
-  document.getElementById('toggleBrainrot').onchange = (e) => {
-    settings.categories.brainrot = e.target.checked;
+  document.getElementById('toggleInformal').onchange = (e) => {
+    settings.categories.informal = e.target.checked;
     saveSettings();
   };
-  document.getElementById('toggleCorporate').onchange = (e) => {
-    settings.categories.corporate = e.target.checked;
+  document.getElementById('toggleJargon').onchange = (e) => {
+    settings.categories.jargon = e.target.checked;
+    saveSettings();
+  };
+  document.getElementById('toggleWeak').onchange = (e) => {
+    settings.categories.weak = e.target.checked;
     saveSettings();
   };
   document.getElementById('toggleAudioAlert').onchange = (e) => {
@@ -1045,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const replacement = repInput.value.trim();
     
     if (!word) {
-      alert("Please enter a target word.");
+      showToast('Please enter a target word.', 'warning');
       return;
     }
     

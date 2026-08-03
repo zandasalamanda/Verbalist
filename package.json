@@ -1,7 +1,7 @@
 {
   "name": "verbalist-speech-coach",
-  "version": "1.0.0",
-  "description": "An interactive AI speech coach web app that eliminates fillers, brainrot, and jargon.",
+  "version": "2.0.0",
+  "description": "Verbalist — A professional speaking coach that helps eliminate filler words, analyze sentence quality, and improve speaking clarity with real-time AI-powered feedback.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,8 +10,9 @@
     "speech",
     "coach",
     "filler-words",
-    "brainrot",
-    "jargon"
+    "professional-speaking",
+    "communication",
+    "verbalist"
   ],
   "author": "Antigravity",
   "license": "ISC"

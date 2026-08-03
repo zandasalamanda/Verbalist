@@ -23,10 +23,12 @@
   /* Category Warning Colors */
   --color-filler: hsl(32, 95%, 55%);
   --color-filler-glow: hsla(32, 95%, 55%, 0.2);
-  --color-brainrot: hsl(335, 90%, 55%);
-  --color-brainrot-glow: hsla(335, 90%, 55%, 0.2);
-  --color-corporate: hsl(195, 90%, 50%);
-  --color-corporate-glow: hsla(195, 90%, 50%, 0.2);
+  --color-informal: hsl(335, 90%, 55%);
+  --color-informal-glow: hsla(335, 90%, 55%, 0.2);
+  --color-jargon: hsl(195, 90%, 50%);
+  --color-jargon-glow: hsla(195, 90%, 50%, 0.2);
+  --color-weak: hsl(270, 75%, 65%);
+  --color-weak-glow: hsla(270, 75%, 65%, 0.2);
   
   /* Fonts */
   --font-display: 'Outfit', sans-serif;
@@ -106,7 +108,7 @@ header {
 }
 
 .brand-icon {
-  background: linear-gradient(135deg, var(--accent), var(--color-corporate));
+  background: linear-gradient(135deg, var(--accent), var(--color-jargon));
   width: 40px;
   height: 40px;
   border-radius: 10px;
@@ -118,6 +120,14 @@ header {
   font-size: 1.25rem;
   box-shadow: 0 4px 15px hsla(260, 85%, 65%, 0.4);
   color: white;
+  overflow: hidden;
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .brand h1 {
@@ -303,7 +313,7 @@ header {
 }
 
 .recording .pulse-dot {
-  background-color: var(--color-brainrot);
+  background-color: var(--color-informal);
   animation: rec-pulse 1.5s infinite;
 }
 
@@ -337,7 +347,7 @@ header {
   color: var(--text-primary);
 }
 
-.transcription-viewport .word-filler {
+.transcription-viewport .word-fillers {
   color: var(--color-filler);
   font-weight: 600;
   border-bottom: 2px dashed var(--color-filler);
@@ -348,22 +358,44 @@ header {
   position: relative;
 }
 
-.transcription-viewport .word-brainrot {
-  color: var(--color-brainrot);
+.transcription-viewport .word-informal {
+  color: var(--color-informal);
   font-weight: 600;
-  border-bottom: 2px dashed var(--color-brainrot);
-  background: var(--color-brainrot-glow);
+  border-bottom: 2px dashed var(--color-informal);
+  background: var(--color-informal-glow);
   padding: 0 0.15rem;
   border-radius: 3px;
   cursor: help;
   position: relative;
 }
 
-.transcription-viewport .word-corporate {
-  color: var(--color-corporate);
+.transcription-viewport .word-jargon {
+  color: var(--color-jargon);
   font-weight: 600;
-  border-bottom: 2px dashed var(--color-corporate);
-  background: var(--color-corporate-glow);
+  border-bottom: 2px dashed var(--color-jargon);
+  background: var(--color-jargon-glow);
+  padding: 0 0.15rem;
+  border-radius: 3px;
+  cursor: help;
+  position: relative;
+}
+
+.transcription-viewport .word-weak {
+  color: var(--color-weak);
+  font-weight: 600;
+  border-bottom: 2px dashed var(--color-weak);
+  background: var(--color-weak-glow);
+  padding: 0 0.15rem;
+  border-radius: 3px;
+  cursor: help;
+  position: relative;
+}
+
+.transcription-viewport .word-custom {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom: 2px dashed var(--accent);
+  background: var(--accent-glow);
   padding: 0 0.15rem;
   border-radius: 3px;
   cursor: help;
@@ -437,7 +469,7 @@ header {
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, var(--color-brainrot), hsl(350, 85%, 55%));
+  background: linear-gradient(135deg, var(--color-informal), hsl(350, 85%, 55%));
   color: white;
   box-shadow: 0 4px 15px hsla(335, 90%, 55%, 0.3);
 }
@@ -633,7 +665,7 @@ header {
 }
 
 .score-number.score-critical {
-  color: var(--color-brainrot);
+  color: var(--color-informal);
 }
 
 .score-unit {
@@ -713,8 +745,9 @@ header {
 }
 
 .cat-fillers { background-color: var(--color-filler); }
-.cat-brainrot { background-color: var(--color-brainrot); }
-.cat-corporate { background-color: var(--color-corporate); }
+.cat-informal { background-color: var(--color-informal); }
+.cat-jargon { background-color: var(--color-jargon); }
+.cat-weak { background-color: var(--color-weak); }
 
 .category-label {
   font-family: var(--font-display);
@@ -823,8 +856,9 @@ header {
 }
 
 .freq-badge.badge-fillers { background: var(--color-filler-glow); color: var(--color-filler); border: 1px solid hsla(32, 95%, 55%, 0.15); }
-.freq-badge.badge-brainrot { background: var(--color-brainrot-glow); color: var(--color-brainrot); border: 1px solid hsla(335, 90%, 55%, 0.15); }
-.freq-badge.badge-corporate { background: var(--color-corporate-glow); color: var(--color-corporate); border: 1px solid hsla(195, 90%, 50%, 0.15); }
+.freq-badge.badge-informal { background: var(--color-informal-glow); color: var(--color-informal); border: 1px solid hsla(335, 90%, 55%, 0.15); }
+.freq-badge.badge-jargon { background: var(--color-jargon-glow); color: var(--color-jargon); border: 1px solid hsla(195, 90%, 50%, 0.15); }
+.freq-badge.badge-weak { background: var(--color-weak-glow); color: var(--color-weak); border: 1px solid hsla(270, 75%, 65%, 0.15); }
 
 .freq-count-bar {
   display: flex;
@@ -1144,7 +1178,7 @@ input:checked + .slider:before {
 }
 
 .remove-tag-btn:hover {
-  color: var(--color-brainrot);
+  color: var(--color-informal);
 }
 
 /* Range input style */
@@ -1211,4 +1245,199 @@ footer a {
 
 footer a:hover {
   text-decoration: underline;
+}
+
+/* Panel Header Right (Confidence + Language Badge) */
+.panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Confidence Meter */
+.confidence-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confidence-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.confidence-bar-outer {
+  width: 60px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidence-bar-inner {
+  height: 100%;
+  width: 0%;
+  background: var(--safe);
+  border-radius: 3px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.confidence-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+/* Toast Notification System */
+.toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+  max-width: 420px;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-surface-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast i {
+  font-size: 1.1rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.toast-info i { color: var(--color-jargon); }
+.toast-warning i { color: var(--color-filler); }
+.toast-success i { color: var(--safe); }
+.toast-error i { color: var(--color-informal); }
+
+.toast-info { border-left: 3px solid var(--color-jargon); }
+.toast-warning { border-left: 3px solid var(--color-filler); }
+.toast-success { border-left: 3px solid var(--safe); }
+.toast-error { border-left: 3px solid var(--color-informal); }
+
+/* Sentence Analysis Panel */
+.analytics-full-width {
+  grid-column: 1 / -1;
+}
+
+.sentence-analysis-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.sentence-analysis-panel:empty::before {
+  content: "Sentence analysis results will appear here as you speak. Issues like run-on sentences, filler density, and word repetition are tracked automatically.";
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.sentence-issue {
+  padding: 0.85rem 1rem;
+  background: hsla(223, 20%, 8%, 0.3);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  border-left: 3px solid var(--text-muted);
+}
+
+.sentence-issue.severity-warning {
+  border-left-color: var(--color-filler);
+}
+
+.sentence-issue.severity-caution {
+  border-left-color: var(--color-informal);
+}
+
+.sentence-issue.severity-info {
+  border-left-color: var(--color-jargon);
+}
+
+.issue-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.issue-header i {
+  font-size: 0.85rem;
+}
+
+.severity-warning .issue-header i { color: var(--color-filler); }
+.severity-caution .issue-header i { color: var(--color-informal); }
+.severity-info .issue-header i { color: var(--color-jargon); }
+
+.issue-type {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.issue-message {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+  line-height: 1.4;
+}
+
+.issue-suggestion {
+  font-size: 0.8rem;
+  color: var(--safe);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.issue-suggestion i {
+  color: var(--safe);
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+/* Transcription placeholder text update */
+.transcription-viewport:empty::before {
+  content: "Click 'Start Session' and begin speaking. Your real-time transcription will stream here with intelligent analysis...";
 }
